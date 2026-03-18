@@ -1,0 +1,11 @@
+{
+  "name": "todoist-sync",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "sync": "node sync.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0"
+  }
+}
