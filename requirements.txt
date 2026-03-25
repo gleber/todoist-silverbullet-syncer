@@ -1,2 +1,0 @@
-todoist-api-python
-python-dotenv
