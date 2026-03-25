@@ -6,7 +6,7 @@ Node.js script that syncs Todoist tasks to markdown and processes updates from a
 
 - `sync.mjs` — single script, runs every 5 min via launchd (`com.c8664.todoist-sync`)
 - Todoist API v1 (`https://api.todoist.com/api/v1`), token in `.env`
-- SSL: corporate proxy (Sixt/Cato) requires `NODE_EXTRA_CA_CERTS=/Users/c8664/.ssl/combined-ca.pem`
+- SSL: if behind a corporate VPN/proxy that intercepts TLS, set `NODE_EXTRA_CA_CERTS` to a CA bundle that includes the proxy's cert
 
 ## What the script does (in order)
 
@@ -44,7 +44,10 @@ Node.js script that syncs Todoist tasks to markdown and processes updates from a
 ## Running manually
 
 ```bash
-NODE_EXTRA_CA_CERTS=/Users/c8664/.ssl/combined-ca.pem node sync.mjs
+node sync.mjs
+
+# If behind a corporate VPN/proxy:
+NODE_EXTRA_CA_CERTS=/path/to/ca-bundle.pem node sync.mjs
 ```
 
 ## launchd management

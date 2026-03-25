@@ -27,10 +27,14 @@ launchctl load ~/Library/LaunchAgents/com.c8664.todoist-sync.plist
 ## Manual run
 
 ```bash
-NODE_EXTRA_CA_CERTS=/Users/c8664/.ssl/combined-ca.pem node sync.mjs
+node sync.mjs
 ```
 
-> The `NODE_EXTRA_CA_CERTS` var is needed on networks with a corporate TLS proxy (Cato/Sixt).
+If behind a corporate VPN/proxy that intercepts TLS:
+
+```bash
+NODE_EXTRA_CA_CERTS=/path/to/your/ca-bundle.pem node sync.mjs
+```
 
 ## UPDATE.md format
 
