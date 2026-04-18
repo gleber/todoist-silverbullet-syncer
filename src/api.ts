@@ -59,7 +59,27 @@ export async function pushLocalCommands(
 
   try {
     const response = await api.sync({ commands: syncCommands });
-    return { tempIdMapping: response.tempIdMapping ?? {} };
+    const rawMapping = response.tempIdMapping ?? {};
+    const tempIdMapping: Record<string, string> = {};
+
+    // Restore the mangled mapping keys to our original tempIds
+    const originalTempIds = commands.map(c => c.tempId).filter(Boolean) as string[];
+    const normalizedMap = new Map<string, string>();
+    for (const original of originalTempIds) {
+      normalizedMap.set(original.replace(/-/g, '').toLowerCase(), original);
+    }
+
+    for (const [key, value] of Object.entries(rawMapping)) {
+      const normalizedKey = key.replace(/-/g, '').toLowerCase();
+      const original = normalizedMap.get(normalizedKey);
+      if (original) {
+        tempIdMapping[original] = value;
+      } else {
+        tempIdMapping[key] = value; // Fallback
+      }
+    }
+
+    return { tempIdMapping };
   } catch (e) {
     console.error(`[${getTimestamp()}] Sync batch failed:`, e);
     return { tempIdMapping: {} };

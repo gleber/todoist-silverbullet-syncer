@@ -5,3 +5,4 @@ node_modules/
 log.txt
 TASKS.md
 .todoist-sync-state.json
+coverage/

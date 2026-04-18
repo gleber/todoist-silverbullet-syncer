@@ -158,10 +158,30 @@ export async function tick(): Promise<void> {
   const filteredRemoteChanges: Task[] = [];
   for (const [id, remote] of remoteTruth) {
     if (localChangedIds.has(id)) {
+      const prevState = state.localState[id];
+      const remoteDueStr = remote.due ? remote.due.string || remote.due.date : null;
+      const remoteChanged =
+        !prevState ||
+        prevState.content !== remote.content ||
+        prevState.checked !== remote.checked ||
+        prevState.priority !== remote.priority ||
+        prevState.dueString !== remoteDueStr ||
+        prevState.description !== remote.description;
+
+      if (!remoteChanged) {
+        // No conflict. Local change should take precedence, skip remote override.
+        continue;
+      }
+
       const localTask = currentTasks.find((t) => t.id === id);
       if (localTask) {
         localTask.content += ' (Conflict)';
         localTask.id = null;
+        if (localTask.node.children[0]?.type === 'paragraph') {
+          localTask.node.children[0].children = [
+            { type: 'text', value: formatTaskWithAttributes(localTask) },
+          ];
+        }
       }
     }
     filteredRemoteChanges.push(remote);
@@ -173,6 +193,7 @@ export async function tick(): Promise<void> {
       currentTasks,
       filteredRemoteChanges,
       projects as (PersonalProject | WorkspaceProject)[],
+      new Set(remoteTruth.keys()),
     );
   }
 

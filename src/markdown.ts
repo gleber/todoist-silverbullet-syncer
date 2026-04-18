@@ -203,6 +203,7 @@ export function applyRemoteChanges(
   tasks: ParsedTask[],
   remoteTruth: Task[],
   projects: (PersonalProject | WorkspaceProject)[] = [],
+  fullRemoteTruthIds?: Set<string>,
 ): void {
   const taskMap = new Map<string, ParsedTask>();
   for (const t of tasks) {
@@ -313,8 +314,15 @@ export function applyRemoteChanges(
   }
 
   for (const task of tasks) {
-    if (task.id && !processedIds.has(task.id)) {
-      console.log(`[Local] Removing task: "${task.content}" (${task.id})`);
+    const isDuplicate = task.id !== null && taskMap.get(task.id) !== task;
+    const isDeletedRemotely = fullRemoteTruthIds 
+        ? !fullRemoteTruthIds.has(task.id as string) 
+        : !processedIds.has(task.id as string);
+        
+    if (task.id && (isDeletedRemotely || isDuplicate)) {
+      console.log(
+        `[Local] Removing ${isDuplicate ? 'duplicate ' : ''}task: "${task.content}" (${task.id})`,
+      );
       const parent = findParent(ast, task.node);
       if (parent) {
         parent.children = parent.children.filter((c) => c !== task.node);
