@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "sync": "tsx sync.ts",
-    "dev": "tsx watch sync.ts --watch",
+    "sync": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "check": "tsc --noEmit && npm run lint"

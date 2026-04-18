@@ -1,59 +1,51 @@
 # Todoist Sync
 
-Node.js script that syncs Todoist tasks to markdown and processes updates from agents.
+TypeScript/Node script that provides a robust two-way sync between Todoist and a local Markdown file (`TASKS.md`), processing and reconciling changes made by either agents or humans. It uses SilverBullet markdown as output.
 
 ## Architecture
 
-- `sync.mjs` — single script, runs every 5 min via launchd (`com.c8664.todoist-sync`)
-- Todoist API v1 (`https://api.todoist.com/api/v1`), token in `.env`
-- SSL: if behind a corporate VPN/proxy that intercepts TLS, set `NODE_EXTRA_CA_CERTS` to a CA bundle that includes the proxy's cert
+- Uses `npm run dev` (runs `src/index.ts` under `tsx`) out of the box to watch files using `chokidar` and synchronizes every minute.
+- Todoist SDK (`@doist/todoist-sdk`), token supplied in `.env`
+- Fully migrated to strict TypeScript, featuring modularized domains (`src/api.ts`, `src/markdown.ts`, `src/sync.ts`, etc.).
+- Converts `mdast` natively locally back-and-forth into Todoist representations maintaining ID tracking entirely from within the Markdown using simple property structures `[id: "XYZ"]`.
 
-## What the script does (in order)
+## What the script does (in order of a tick)
 
-1. Reads `~/Documents/Todoist/UPDATE.md` and executes actions (create/complete/update/delete/attach)
-2. Re-fetches all tasks from Todoist API
-3. Writes `~/Documents/Todoist/LIST.md` with current open tasks
-4. Appends timestamp to `log.txt`
+1. Fetches current state from Todoist API (`api.sync()` for items/projects) and recently completed items via `api.getCompletedTasksByCompletionDate()`.
+2. Reads `TASKS.md` locally and builds an Abstract Syntax Tree using `mdast`.
+3. Compares localized MD attributes (`[priority: 2]`, `#tags`, `[completed: "2024"]`) to remote truths to calculate the exact mutation instructions (moves, checks, edits, deletes).
+4. Submits updates remotely in batches.
+5. Reapplies the finalized authoritative truth from Todoist back into the `TASKS.md`.
 
 ## Key files
 
-| File | Location | Purpose |
-|------|----------|---------|
-| `sync.mjs` | This repo | Main script |
-| `.env` | This repo | `TODOIST_API_TOKEN` |
-| `log.txt` | This repo | Run log, latest at bottom |
-| `LIST.md` | `~/Documents/Todoist/` | Read-only task list |
-| `UPDATE.md` | `~/Documents/Todoist/` | Agent-writable actions |
-| `AGENTS.md` | `~/Documents/Todoist/` | Spec for agents interacting with tasks |
-| `history/` | `~/Documents/Todoist/` | Processed action logs |
-| Plist | `~/Library/LaunchAgents/com.c8664.todoist-sync.plist` | launchd config |
+| File | Purpose |
+|------|---------|
+| `src/index.ts` | The continuous run loop and CLI parameter processor (`--once`, `--watch`) |
+| `src/sync.ts` | Central algorithmic synchronization processing `tick()` |
+| `src/markdown.ts` | Handling local tree-parsing and remote modifications stringified over the AST  |
+| `src/types.ts` | Explicit core models (`TaskMetadata`, `ParsedTask`, `LoadedState`, etc.) |
+| `TASKS.md` | Primary storage medium and target location. Modifications must happen here directly! |
+| `.todoist-sync-state.json` | Used for retaining mappings inside sync logic boundaries |
 
 ## API quirks
 
-- Responses are paginated: `{ results, next_cursor }`
-- Moving tasks to a different project/section requires `POST /tasks/{id}/move` (separate from update)
-- Comments use `attachment` field (not `file_attachment`) for file uploads
-- Priority is inverted: API 4=P1, 3=P2, 2=P3, 1=P4
-- Sort fields: `child_order` (tasks/projects), `section_order` (sections)
+- Moving tasks to a different project/section conditionally uses `parentId` locally or skips entirely to just reassign `projectId`.
+- Sync SDK API commands expect `args: Record<string, unknown>` and must not carry unknown payloads so strictly typed structures are observed globally.
+- Completing a task generates `[completed: "YYYY-MM-DD"]` into the AST automatically locally.
 
 ## Labels convention
 
-- `@ai` — task was created or modified by the sync system
-- `@ai-done` — agent marked task as complete, pending user review
+By default standard tags act as labels directly `#work` becoming `'work'`.
 
 ## Running manually
 
 ```bash
-node sync.mjs
+# Run one immediate check and sync tick
+npm run sync -- --once
 
-# If behind a corporate VPN/proxy:
-NODE_EXTRA_CA_CERTS=/path/to/ca-bundle.pem node sync.mjs
-```
-
-## launchd management
-
-```bash
-launchctl load ~/Library/LaunchAgents/com.c8664.todoist-sync.plist
-launchctl unload ~/Library/LaunchAgents/com.c8664.todoist-sync.plist
-launchctl list | grep todoist
+# Live-watch modes polling
+npm run dev
+# or
+npm run sync -- --watch
 ```

@@ -32,13 +32,15 @@ This tool allows AI agents and humans to manage Todoist tasks by directly readin
 ### Once-off Synchronize
 Runs a single reconciliation "tick" and exits.
 ```bash
-node sync.mjs --once --dir ./my-tasks
+npm run sync -- --once --dir ./my-tasks
 ```
 
 ### Watch/Daemon Mode
-Watches `TASKS.md` for local changes (with debounce) and polls Todoist every 5 minutes.
+Watches `TASKS.md` for local changes (with debounce) and polls Todoist every minute.
 ```bash
-node sync.mjs --watch
+npm run dev
+# or
+npm run sync -- --watch
 ```
 
 ## Task Format
@@ -46,9 +48,9 @@ node sync.mjs --watch
 Tasks are stored in `TASKS.md` as a simple Markdown list:
 
 ```markdown
-- [ ] Buy milk <!-- id: 123456 -->
-- [x] Finished task <!-- id: 789012 -->
-- [ ] New local task
+* [ ] Buy milk [id: "123456"]
+* [x] Finished task [id: "789012"] [completed: "2026-04-18"]
+* [ ] New local task
 ```
 
 *   **New Tasks**: Simply add a new list item. The synchronizer will assign it a real Todoist ID on the next tick.
@@ -60,7 +62,8 @@ Tasks are stored in `TASKS.md` as a simple Markdown list:
 
 | File | Purpose |
 |------|---------|
-| `sync.mjs` | Main script |
+| `src/index.ts` | Main execution entry point |
+| `src/` | Holds the split modular codebase (`sync`, `api`, `markdown`, etc.) |
 | `.env` | `TODOIST_API_TOKEN` |
 | `TASKS.md` | The live task list. Edit this file! |
 | `.todoist-sync-state.json` | Internal sync state (sync token + local cache) |
@@ -70,4 +73,4 @@ Tasks are stored in `TASKS.md` as a simple Markdown list:
 Agents can interact with Todoist by:
 1.  Reading `TASKS.md` to see current tasks.
 2.  Modifying `TASKS.md` directly.
-3.  The agent should ensure `sync.mjs --watch` is running or trigger `node sync.mjs --once` after making changes if they want immediate synchronization.
+3.  The agent should ensure `npm run dev` is running or trigger `npm run sync -- --once` after making changes if they want immediate synchronization.

@@ -3,7 +3,11 @@ import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 
+import process from 'node:process';
+
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 export default tseslint.config(
+  { ignores: ['eslint.config.js'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.strictTypeChecked,
