@@ -1,98 +1,60 @@
 # todoist-sync
 
-Let Claude Code (cowork mode) read and manage your Todoist tasks — without building an MCP integration.
+A robust, two-way synchronizer between Todoist and a local Markdown file.
 
-A Node script syncs Todoist to local markdown files every 5 minutes via launchd. Agents interact with Todoist by reading `LIST.md` and writing actions to `UPDATE.md` — plain files that any tool can access. No MCP server, no API keys in the agent, no custom tooling. Just files.
+This tool allows AI agents and humans to manage Todoist tasks by directly reading and editing a single Markdown file (`TASKS.md`). It uses the Todoist v1 Sync API for efficient updates and Markdown AST parsing for lossless file modification.
 
 ## How it works
 
-1. Reads `~/Documents/Todoist/UPDATE.md` and executes actions (create/complete/update/delete/attach)
-2. Re-fetches all tasks from Todoist API
-3. Writes `~/Documents/Todoist/LIST.md` with current open tasks
-4. Appends timestamp + task count to `log.txt`
+1.  **Two-Way Sync**: Changes made in `TASKS.md` (new tasks, checked/unchecked, content updates, deletions) are pushed to Todoist.
+2.  **Conflict Resolution**: If a task is modified both locally and remotely, the local version is "forked" (ID removed and marked as conflict), and the remote version is applied.
+3.  **Atomic Writes**: Uses temporary files and moves to ensure your state and tasks files are never corrupted.
+4.  **Watch Mode**: Can run as a daemon, watching the file for changes and polling Todoist for remote updates.
 
 ## Setup
 
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
+2.  Configure environment:
+    ```bash
+    cp .env.example .env
+     # Edit .env and add your TODOIST_API_TOKEN
+    ```
+
+## CLI Usage
+
+### Options
+
+*   `--dir <path>`: Specify the directory where `TASKS.md` and state are stored. Defaults to the current directory.
+
+### Once-off Synchronize
+Runs a single reconciliation "tick" and exits.
 ```bash
-cp .env.example .env  # add TODOIST_API_TOKEN
-npm install
+node sync.mjs --once --dir ./my-tasks
 ```
 
-Load the launchd job (runs every 5 min):
-
+### Watch/Daemon Mode
+Watches `TASKS.md` for local changes (with debounce) and polls Todoist every 5 minutes.
 ```bash
-launchctl load ~/Library/LaunchAgents/com.c8664.todoist-sync.plist
+node sync.mjs --watch
 ```
 
-## Manual run
+## Task Format
 
-```bash
-node sync.mjs
+Tasks are stored in `TASKS.md` as a simple Markdown list:
+
+```markdown
+- [ ] Buy milk <!-- id: 123456 -->
+- [x] Finished task <!-- id: 789012 -->
+- [ ] New local task
 ```
 
-If behind a corporate VPN/proxy that intercepts TLS:
-
-```bash
-NODE_EXTRA_CA_CERTS=/path/to/your/ca-bundle.pem node sync.mjs
-```
-
-## UPDATE.md format
-
-Write action blocks separated by `---`. Processed once, then cleared.
-
-```
-action: create
-content: Buy milk
-project: Personal
-due: tomorrow
-priority: 2
-
----
-
-action: complete
-task: Buy milk
-project: Personal
-
----
-
-action: update
-task: Some task
-project: Work
-set_due: 2026-04-01
-add_labels: @waiting
-
----
-
-action: delete
-task: Old task
-
----
-
-action: attach
-task: Some task
-file: /path/to/file.pdf
-comment: Here's the report
-```
-
-### Supported fields
-
-| Field | Actions | Notes |
-|-------|---------|-------|
-| `content` | create | Task title |
-| `project` | all | Project name (case-insensitive) |
-| `section` | create | Section name |
-| `parent` | create | Parent task (substring match) |
-| `due` | create | Date (`YYYY-MM-DD`) or natural string |
-| `priority` | create, update | 1–4 (1=lowest) |
-| `description` | create, update (via `set_description`) | |
-| `labels` | create | Comma-separated |
-| `add_labels` | update | Adds to existing labels |
-| `set_content` | update | Rename task |
-| `set_due` | update | Change due date |
-| `set_project` | update | Move to project |
-| `set_section` | update | Move to section |
-| `file` | attach | Absolute path |
-| `comment` | attach | Comment text (default: "Attached file") |
+*   **New Tasks**: Simply add a new list item. The synchronizer will assign it a real Todoist ID on the next tick.
+*   **Completing Tasks**: Change `[ ]` to `[x]`.
+*   **Deleting Tasks**: Remove the line from the file.
+*   **Updating Content**: Change the text after the checkbox.
 
 ## Files
 
@@ -100,13 +62,12 @@ comment: Here's the report
 |------|---------|
 | `sync.mjs` | Main script |
 | `.env` | `TODOIST_API_TOKEN` |
-| `log.txt` | Run log (latest at bottom) |
-| `~/Documents/Todoist/LIST.md` | Read-only task list (generated) |
-| `~/Documents/Todoist/UPDATE.md` | Agent-writable actions |
-| `~/Documents/Todoist/AGENTS.md` | Spec for agent integration |
-| `~/Documents/Todoist/history/` | Per-run action logs |
+| `TASKS.md` | The live task list. Edit this file! |
+| `.todoist-sync-state.json` | Internal sync state (sync token + local cache) |
 
-## Labels
+## For AI Agents
 
-- `@ai` — task created or modified by this system
-- `@ai-done` — agent marked complete, pending review
+Agents can interact with Todoist by:
+1.  Reading `TASKS.md` to see current tasks.
+2.  Modifying `TASKS.md` directly.
+3.  The agent should ensure `sync.mjs --watch` is running or trigger `node sync.mjs --once` after making changes if they want immediate synchronization.

@@ -3,9 +3,27 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "sync": "node sync.mjs"
+    "sync": "tsx sync.ts",
+    "dev": "tsx watch sync.ts --watch"
   },
   "dependencies": {
-    "dotenv": "^16.4.0"
+    "@doist/todoist-api-typescript": "^2.1.2",
+    "@doist/todoist-sdk": "^9.1.3",
+    "chokidar": "^5.0.0",
+    "dotenv": "^16.6.1",
+    "node-fetch": "^3.3.2",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unist-util-visit": "^5.1.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/chokidar": "^2.1.7",
+    "@types/node": "^25.6.0",
+    "@types/uuid": "^11.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
   }
 }

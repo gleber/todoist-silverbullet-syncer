@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 node_modules/
 log.txt
+TASKS.md
+.todoist-sync-state.json
