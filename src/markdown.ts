@@ -44,7 +44,12 @@ export function extractTaskProperties(text: string): {
     (_match, key: string, q1?: string, q2?: string, unquoted?: string) => {
       const value = q1 ?? q2 ?? unquoted ?? '';
       if (key === 'priority') {
-        attributes[key] = parseInt(value, 10);
+        const val = value.toLowerCase();
+        if (val === 'p1') attributes[key] = 4;
+        else if (val === 'p2') attributes[key] = 3;
+        else if (val === 'p3') attributes[key] = 2;
+        else if (val === 'p4') attributes[key] = 1;
+        else attributes[key] = parseInt(value, 10);
       } else {
         attributes[key] = value;
       }
@@ -79,8 +84,14 @@ export function formatTaskWithAttributes(task: {
     parts.push(...task.labels.map((l) => `#${l}`));
   }
 
+  const priorityMap: Record<number, string> = {
+    4: 'p1',
+    3: 'p2',
+    2: 'p3',
+    1: 'p4',
+  };
   if (task.priority && task.priority > 1) {
-    parts.push(`[priority: ${String(task.priority)}]`);
+    parts.push(`[priority: ${priorityMap[task.priority] || String(task.priority)}]`);
   }
 
   if (task.dueString) {

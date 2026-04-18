@@ -59,6 +59,17 @@ Tasks are stored in `TASKS.md` as a simple Markdown list:
 *   **Completing Tasks**: Change `[ ]` to `[x]`.
 *   **Deleting Tasks**: Remove the line from the file.
 *   **Updating Content**: Change the text after the checkbox.
+*   **Attributes**: Use `[key: value]` and `#tags` at the end of the line.
+    *   `[id: "..."]`: The unique Todoist task ID.
+    *   `[priority: p1]`: Critical (Red)
+    *   `[priority: p2]`: High (Orange)
+    *   `[priority: p3]`: Medium (Blue)
+    *   `[priority: p4]`: Low (White). Default, hidden on save.
+    *   `[due: "string"]`: Due date (e.g., `tomorrow`, `every Friday`).
+    *   `[completed: "yyyy-mm-dd"]`: Date when task was completed.
+    *   `#tag`: Maps to Todoist labels.
+*   **Hierarchy**: Use indented sub-lists to represent sub-tasks.
+*   **Projects**: Use level 1 headings (`# Project Name`) to group tasks into projects. tasks before any heading go to Inbox.
 
 ## Files
 
