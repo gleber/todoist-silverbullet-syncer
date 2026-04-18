@@ -1,8 +1,10 @@
-# todoist-sync
+# Todoist SilverBullet Syncer
 
-A robust, two-way synchronizer between Todoist and a local Markdown file.
+A robust, two-way synchronizer between Todoist and a local Markdown file, using SilverBullet.md markdown flavor.
 
-This tool allows AI agents and humans to manage Todoist tasks by directly reading and editing a single Markdown file (`TASKS.md`). It uses the Todoist v1 Sync API for efficient updates and Markdown AST parsing for lossless file modification.
+This tool allows AI agents and humans to manage Todoist tasks by directly reading and editing a single Markdown file (`TASKS.md`). It uses the Todoist v1 Sync API for efficient updates and Markdown AST parsing for lossless file modification. It uses hidden `.todoist-sync-state.json` to store sync state and local cache, which is required to ensure safe two-way sync.
+
+It is based on [escudero89/todoist-sync](https://github.com/escudero89/todoist-sync), but heavily rewritten to use TypeScript, two-way sync from single file, and to use SilverBullet markdown flavor.
 
 ## How it works
 
